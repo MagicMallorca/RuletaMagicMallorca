@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta Magic Mallorca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b0d13;
+    --ink-2:#12141c;
+    --surface:#161923;
+    --surface-2:#1e2230;
+    --line:#262b38;
+    --brass:#c9a24a;
+    --brass-dim:#8a7238;
+    --parchment:#f3ede0;
+    --muted:#8b8f9e;
+    --danger:#d9534f;
+    --success:#4ade80;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:radial-gradient(ellipse 900px 500px at 50% -8%, #1c2030 0%, var(--ink) 60%), var(--ink);
+    color:var(--parchment);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;
+    padding:44px 16px 60px;
+  }
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--brass);margin-bottom:10px;text-align:center}
+  h1{font-family:'Cinzel',serif;font-size:26px;font-weight:600;letter-spacing:.01em;text-align:center;
+    margin-bottom:6px;color:var(--parchment)}
+  .subtitle{color:var(--muted);font-size:13px;margin-bottom:34px;text-align:center}
+  .badge{position:fixed;top:14px;right:14px;padding:5px 12px;border-radius:2px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    border:1px solid var(--brass);color:var(--brass);background:rgba(201,162,74,.08)}
+
+  .wheel-wrap{position:relative;width:min(84vw,360px);height:min(84vw,360px);margin-bottom:36px;
+    filter:drop-shadow(0 22px 46px rgba(0,0,0,.55))}
+  .foil-sweep{
+    position:absolute;inset:-9px;border-radius:50%;pointer-events:none;z-index:2;opacity:.85;
+    background:conic-gradient(from 0deg,
+      transparent 0deg, rgba(139,92,246,.38) 40deg, rgba(56,189,248,.32) 95deg,
+      rgba(244,114,182,.32) 145deg, transparent 195deg, transparent 360deg);
+    mix-blend-mode:screen;
+    animation:sweep 9s linear infinite;
+  }
+  @keyframes sweep{ to{ transform:rotate(360deg); } }
+  .pointer{
+    position:absolute;top:-17px;left:50%;transform:translateX(-50%);width:0;height:0;
+    border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--brass);
+    z-index:6;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));
+  }
+  svg{
+    width:100%;height:100%;position:relative;z-index:1;border-radius:50%;
+    transition:transform 4.6s cubic-bezier(.14,.7,.08,1);
+    box-shadow:0 0 0 2px var(--ink), 0 0 0 5px var(--brass), 0 0 0 7px var(--ink), 0 0 0 8px rgba(201,162,74,.35);
+  }
+  .hub{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:15%;height:15%;border-radius:50%;
+    background:radial-gradient(circle at 35% 32%, #f6e8bf, var(--brass) 55%, #8a7238 100%);
+    box-shadow:0 2px 8px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,255,255,.4);
+    border:1px solid var(--ink);z-index:5;
+  }
+
+  .spin-btn{
+    padding:15px 46px;font-family:'Cinzel',serif;font-size:15px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--brass);border-radius:2px;
+    background:linear-gradient(180deg,#1d212c,#12141c);color:var(--brass);cursor:pointer;
+    box-shadow:0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+    transition:background .2s,box-shadow .2s,transform .1s;
+  }
+  .spin-btn:hover:not(:disabled){background:linear-gradient(180deg,#262b3a,#161923);
+    box-shadow:0 4px 24px rgba(201,162,74,.25), inset 0 1px 0 rgba(255,255,255,.08)}
+  .spin-btn:active:not(:disabled){transform:scale(.97)}
+  .spin-btn:disabled{opacity:.4;cursor:not-allowed}
+  .result{margin-top:22px;font-family:'Cinzel',serif;font-size:20px;font-weight:600;text-align:center;
+    min-height:28px;color:var(--success)}
+
+  /* ADMIN */
+  .admin-panel{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--line);
+    border-top:2px solid var(--brass);border-radius:4px;padding:22px;margin-bottom:20px}
+  .admin-panel h2{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--brass);margin-bottom:16px;font-weight:600}
+  .seg-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;background:var(--surface-2);
+    padding:8px;border-radius:3px;border:1px solid #2a2f3d}
+  .seg-row input[type=text]{flex:1;min-width:0}
+  .seg-row input[type=number]{width:60px}
+  .seg-row input[type=color]{width:34px;height:34px;border:1px solid #333;border-radius:4px;padding:0;
+    background:none;cursor:pointer}
+  input[type=text],input[type=number],input[type=password],select,textarea{
+    background:var(--ink-2);border:1px solid #2e3342;color:var(--parchment);
+    padding:9px 10px;border-radius:3px;font-size:13px;font-family:'Inter',sans-serif}
+  input:focus,select:focus,textarea:focus{outline:1px solid var(--brass);border-color:var(--brass)}
+  .btn{padding:9px 16px;border:1px solid transparent;border-radius:3px;cursor:pointer;
+    font-size:12.5px;font-weight:600;font-family:'Inter',sans-serif;letter-spacing:.02em;transition:filter .15s}
+  .btn:hover{filter:brightness(1.15)}
+  .btn-green{background:#1d3a2a;color:#4ade80;border-color:#2d5a3f}
+  .btn-red{background:#3a1d1d;color:#f2867e;border-color:#5a2d2d;padding:7px 11px}
+  .btn-blue{background:#1a2a3d;color:#7cb3f0;border-color:#2d4560}
+  .btn-outline{background:transparent;border:1px solid #3a3f4d;color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .force-status{margin-top:14px;padding:10px 12px;border-radius:3px;font-size:12.5px;font-weight:600}
+  .force-on{background:#2e1616;color:#ff8a80;border:1px solid #5a2d2d}
+  .force-off{background:#132a1e;color:#4ade80;border:1px solid #1f4230}
+  .field-label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);
+    margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.1em}
+
+  .lock{max-width:320px;margin:100px auto;text-align:center}
+  .lock h1{margin-bottom:20px}
+  .lock input{width:100%;padding:13px;font-size:15px;margin:6px 0 14px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+const ADMIN_PASSWORD = "magicmallorca"; // cámbiala cuando quieras
+const STORAGE_KEY = "ruletaConfigMM";
+
+const isAdmin = new URLSearchParams(location.search).has("admin");
+
+const defaultConfig = {
+  segments: [
+    { id: "s1", name: "5% dto.", color: "#b3542f", weight: 30 },
+    { id: "s2", name: "Sobre gratis", color: "#c9a24a", weight: 15 },
+    { id: "s3", name: "Sigue jugando", color: "#3b5a7a", weight: 30 },
+    { id: "s4", name: "10% dto.", color: "#2f6b4f", weight: 10 },
+    { id: "s5", name: "Carta promo", color: "#6b4a8a", weight: 10 },
+    { id: "s6", name: "Premio grande", color: "#8a3a3a", weight: 5 }
+  ],
+  forced: { active: false, segmentId: null, mode: "once" } // mode: "once" | "always"
+};
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(defaultConfig);
+    const parsed = JSON.parse(raw);
+    if (!parsed.forced) parsed.forced = structuredClone(defaultConfig.forced);
+    return parsed;
+  } catch { return structuredClone(defaultConfig); }
+}
+function saveConfig(cfg) { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); }
+
+let config = loadConfig();
+
+function uid() { return "s" + Math.random().toString(36).slice(2, 9); }
+
+// ---------- WHEEL SVG ----------
+function buildWheelSVG(segments) {
+  const total = segments.reduce((a, s) => a + Number(s.weight || 0), 0) || 1;
+  const R = 100, C = 100;
+  let angle = -90; // start at top
+  let paths = "", labels = "";
+  segments.forEach(seg => {
+    const frac = Number(seg.weight || 0) / total;
+    const sweep = frac * 360;
+    const a0 = angle * Math.PI / 180;
+    const a1 = (angle + sweep) * Math.PI / 180;
+    const x0 = C + R * Math.cos(a0), y0 = C + R * Math.sin(a0);
+    const x1 = C + R * Math.cos(a1), y1 = C + R * Math.sin(a1);
+    const large = sweep > 180 ? 1 : 0;
+    paths += `<path d="M${C},${C} L${x0.toFixed(2)},${y0.toFixed(2)} A${R},${R} 0 ${large} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${seg.color}" stroke="#0b0d13" stroke-width="1"/>`;
+    const midDeg = angle + sweep / 2;
+    const midRad = midDeg * Math.PI / 180;
+    const norm = ((midDeg % 360) + 360) % 360;
+    const flip = norm > 90 && norm < 270; // evita texto boca abajo en la mitad izquierda
+    const rot = flip ? midDeg + 180 : midDeg;
+    const rText = flip ? R * 0.86 : R * 0.24; // flip: empieza cerca del borde y va hacia el centro / normal: del centro hacia fuera
+    const lx = C + rText * Math.cos(midRad), ly = C + rText * Math.sin(midRad);
+    const fontSize = seg.name.length > 12 ? 5.6 : seg.name.length > 8 ? 6.2 : 7;
+    labels += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" font-size="${fontSize}" font-family="Inter, sans-serif" fill="#f3ede0" font-weight="700" text-anchor="start" transform="rotate(${rot.toFixed(2)} ${lx.toFixed(2)} ${ly.toFixed(2)})">${escapeXML(seg.name)}</text>`;
+    angle += sweep;
+  });
+  return `<svg viewBox="0 0 200 200" id="wheelSvg">${paths}${labels}</svg>`;
+}
+function escapeXML(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function segMidAngles(segments) {
+  const total = segments.reduce((a, s) => a + Number(s.weight || 0), 0) || 1;
+  let angle = -90;
+  return segments.map(seg => {
+    const sweep = Number(seg.weight || 0) / total * 360;
+    const mid = angle + sweep / 2;
+    angle += sweep;
+    return { id: seg.id, mid };
+  });
+}
+
+function pickWeightedRandom(segments) {
+  const total = segments.reduce((a, s) => a + Number(s.weight || 0), 0) || 1;
+  let r = Math.random() * total;
+  for (const s of segments) {
+    r -= Number(s.weight || 0);
+    if (r <= 0) return s.id;
+  }
+  return segments[segments.length - 1].id;
+}
+
+// ---------- PUBLIC VIEW ----------
+let currentRotation = 0;
+let spinning = false;
+
+function renderPublic() {
+  document.title = "Ruleta Magic Mallorca";
+  document.getElementById("app").innerHTML = `
+    <div class="eyebrow">Magic Mallorca</div>
+    <h1>🎡 Ruleta</h1>
+    <div class="subtitle">Gira y descubre a quién le toca</div>
+    <div class="wheel-wrap">
+      <div class="foil-sweep"></div>
+      <div class="pointer"></div>
+      ${buildWheelSVG(config.segments)}
+      <div class="hub"></div>
+    </div>
+    <button class="spin-btn" id="spinBtn">Girar</button>
+    <div class="result" id="resultText"></div>
+  `;
+  document.getElementById("spinBtn").onclick = spin;
+}
+
+function spin() {
+  if (spinning) return;
+  spinning = true;
+  config = loadConfig(); // refresca por si el admin cambió algo en este mismo navegador
+  const btn = document.getElementById("spinBtn");
+  const svg = document.getElementById("wheelSvg");
+  const resultEl = document.getElementById("resultText");
+  btn.disabled = true;
+  resultEl.textContent = "";
+
+  let winnerId;
+  const forced = config.forced;
+  if (forced && forced.active && forced.segmentId && config.segments.some(s => s.id === forced.segmentId)) {
+    winnerId = forced.segmentId;
+  } else {
+    winnerId = pickWeightedRandom(config.segments);
+  }
+
+  const mids = segMidAngles(config.segments);
+  const target = mids.find(m => m.id === winnerId);
+  // el puntero está fijo a -90deg (arriba, coincide con el inicio angular 0 de la rueda visualmente)
+  // queremos que el segmento "target.mid" quede alineado a -90deg tras rotar la rueda
+  const needed = (-90 - target.mid);
+  const extraTurns = 5 + Math.floor(Math.random() * 3); // 5-7 vueltas
+  const finalRotation = currentRotation - (currentRotation % 360) + extraTurns * 360 + needed;
+  currentRotation = finalRotation;
+
+  svg.style.transform = `rotate(${finalRotation}deg)`;
+
+  setTimeout(() => {
+    const winnerSeg = config.segments.find(s => s.id === winnerId);
+    resultEl.textContent = "✦ " + (winnerSeg ? winnerSeg.name : "");
+    btn.disabled = false;
+    spinning = false;
+    // si el forzado era de un solo uso, se desactiva tras este giro
+    if (forced && forced.active && forced.mode === "once") {
+      const cfg = loadConfig();
+      cfg.forced.active = false;
+      cfg.forced.segmentId = null;
+      saveConfig(cfg);
+      config = cfg;
+    }
+  }, 4600);
+}
+
+// ---------- ADMIN VIEW ----------
+function renderAdmin() {
+  document.title = "Ruleta — Admin";
+  config = loadConfig();
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="badge">Modo Admin</div>
+    <div class="eyebrow">Magic Mallorca</div>
+    <h1>Panel de control</h1>
+    <div class="subtitle">Carga los nombres y controla quién toca</div>
+
+    <div class="admin-panel">
+      <h2>Cargar lista de nombres</h2>
+      <div class="subtitle" style="margin-bottom:8px;text-align:left">Pega los nombres, uno por línea o separados por comas. Esto sustituye la lista actual.</div>
+      <textarea id="namesInput" rows="6" style="width:100%;resize:vertical" placeholder="Juan Pérez
+María López
+Pedro Gómez"></textarea>
+      <div class="row">
+        <button class="btn btn-blue" id="loadNames">Generar ruleta desde esta lista</button>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <h2>Participantes</h2>
+      <div id="segList"></div>
+      <div class="row">
+        <button class="btn btn-green" id="addSeg">+ Añadir nombre manualmente</button>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <div class="force-box">
+        <h2>Elegir quién toca</h2>
+        <span class="field-label">Persona que debe salir ganadora</span>
+        <select id="forceSelect" style="width:100%"></select>
+        <div class="row">
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px">
+            <input type="radio" name="fmode" value="once" id="modeOnce"> Solo el próximo giro
+          </label>
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px">
+            <input type="radio" name="fmode" value="always" id="modeAlways"> Hasta que lo desactive
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn btn-red" id="activateForce">Activar forzado</button>
+          <button class="btn btn-outline" id="deactivateForce">Desactivar</button>
+        </div>
+        <div id="forceStatus"></div>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <h2>Vista pública</h2>
+      <div class="subtitle" style="margin-bottom:10px;text-align:left">Comparte este enlace en la tienda (sin ?admin):</div>
+      <input type="text" readonly value="${location.origin + location.pathname}" style="width:100%" onclick="this.select()">
+    </div>
+
+    <div class="wheel-wrap">
+      <div class="foil-sweep"></div>
+      <div class="pointer"></div>
+      ${buildWheelSVG(config.segments)}
+      <div class="hub"></div>
+    </div>
+  `;
+  renderSegList();
+  renderForceControls();
+  document.getElementById("addSeg").onclick = () => {
+    config.segments.push({ id: uid(), name: "Nuevo nombre", color: "#888888", weight: 10 });
+    saveConfig(config);
+    renderAdmin();
+  };
+  document.getElementById("loadNames").onclick = () => {
+    const raw = document.getElementById("namesInput").value;
+    const names = raw.split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+    if (names.length < 2) { alert("Introduce al menos 2 nombres."); return; }
+    if (config.segments.length > 0 && !confirm(`Esto sustituirá los ${config.segments.length} participantes actuales por ${names.length} nombres nuevos. ¿Continuar?`)) return;
+    const palette = ["#b3542f","#c9a24a","#3b5a7a","#2f6b4f","#6b4a8a","#8a3a3a","#3a7a7a","#a85a7a","#5a7a2f","#a68a2f","#2f7a6b","#a83a52"];
+    config.segments = names.map((n, i) => ({ id: uid(), name: n, color: palette[i % palette.length], weight: 10 }));
+    config.forced = { active: false, segmentId: null, mode: "once" };
+    saveConfig(config);
+    renderAdmin();
+  };
+}
+
+function renderSegList() {
+  const list = document.getElementById("segList");
+  list.innerHTML = config.segments.map(s => `
+    <div class="seg-row" data-id="${s.id}">
+      <input type="color" value="${s.color}" data-field="color">
+      <input type="text" value="${s.name}" data-field="name" placeholder="Nombre">
+      <input type="number" min="0" value="${s.weight}" data-field="weight" title="Peso (probabilidad relativa)">
+      <button class="btn btn-red" data-del="${s.id}">✕</button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".seg-row").forEach(row => {
+    const id = row.dataset.id;
+    row.querySelectorAll("input").forEach(input => {
+      input.addEventListener("input", () => {
+        const seg = config.segments.find(s => s.id === id);
+        const field = input.dataset.field;
+        seg[field] = field === "weight" ? Number(input.value) : input.value;
+        saveConfig(config);
+        refreshWheelPreview();
+        renderForceControls(); // por si cambia el nombre mostrado
+      });
+    });
+  });
+  list.querySelectorAll("[data-del]").forEach(btn => {
+    btn.onclick = () => {
+      if (config.segments.length <= 2) { alert("Debe quedar al menos 2 premios."); return; }
+      config.segments = config.segments.filter(s => s.id !== btn.dataset.del);
+      saveConfig(config);
+      renderAdmin();
+    };
+  });
+}
+
+function refreshWheelPreview() {
+  const wrap = document.querySelector(".wheel-wrap");
+  const oldSvg = document.getElementById("wheelSvg");
+  const div = document.createElement("div");
+  div.innerHTML = buildWheelSVG(config.segments);
+  oldSvg.replaceWith(div.firstChild);
+}
+
+function renderForceControls() {
+  const select = document.getElementById("forceSelect");
+  select.innerHTML = config.segments.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  if (config.forced.segmentId) select.value = config.forced.segmentId;
+
+  document.getElementById(config.forced.mode === "always" ? "modeAlways" : "modeOnce").checked = true;
+
+  document.getElementById("activateForce").onclick = () => {
+    config.forced.active = true;
+    config.forced.segmentId = select.value;
+    config.forced.mode = document.querySelector('input[name=fmode]:checked').value;
+    saveConfig(config);
+    renderForceControls();
+  };
+  document.getElementById("deactivateForce").onclick = () => {
+    config.forced.active = false;
+    config.forced.segmentId = null;
+    saveConfig(config);
+    renderForceControls();
+  };
+
+  const statusEl = document.getElementById("forceStatus");
+  if (config.forced.active && config.forced.segmentId) {
+    const seg = config.segments.find(s => s.id === config.forced.segmentId);
+    statusEl.className = "force-status force-on";
+    statusEl.textContent = `Forzado activo → "${seg ? seg.name : "?"}" (${config.forced.mode === "always" ? "hasta desactivar" : "solo próximo giro"})`;
+  } else {
+    statusEl.className = "force-status force-off";
+    statusEl.textContent = "Sin forzado — la ruleta usa probabilidades normales";
+  }
+}
+
+// ---------- ENTRY ----------
+function checkPasswordAndRender() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="lock">
+      <div class="eyebrow">Magic Mallorca</div>
+      <h1>Acceso restringido</h1>
+      <input type="password" id="pwInput" placeholder="Contraseña">
+      <button class="btn btn-blue" id="pwBtn" style="width:100%">Entrar</button>
+    </div>
+  `;
+  const tryLogin = () => {
+    if (document.getElementById("pwInput").value === ADMIN_PASSWORD) {
+      renderAdmin();
+    } else {
+      alert("Contraseña incorrecta");
+    }
+  };
+  document.getElementById("pwBtn").onclick = tryLogin;
+  document.getElementById("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
+}
+
+if (isAdmin) {
+  checkPasswordAndRender();
+} else {
+  renderPublic();
+}
+</script>
+</body>
+</html>
